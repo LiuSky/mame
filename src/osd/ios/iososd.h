@@ -11,7 +11,7 @@
 //============================================================
 // DebugLog
 //============================================================
-#define DebugLog 0
+#define DebugLog 1
 #if DebugLog == 0
 #define osd_printf_debug(...) (void)0
 #endif
@@ -50,7 +50,8 @@ public:
     // general overridables
     virtual void init(running_machine &machine) override;
     virtual void update(bool skip_redraw) override;
-    virtual void input_update() override;
+    virtual void input_update(bool relative_reset) override;
+    virtual void check_osd_inputs() override;
     virtual void set_verbose(bool verbose) override { m_verbose = verbose; }
 
     // debugger overridables
@@ -82,7 +83,7 @@ public:
     virtual std::unique_ptr<osd_midi_device> create_midi_device() override {return nullptr;}
     
     // osd_output
-    virtual void output_callback(osd_output_channel channel, const util::format_argument_pack<std::ostream> &args) override;
+    virtual void output_callback(osd_output_channel channel, const util::format_argument_pack<char> &args) override;
     
     // getters
     running_machine &machine() const { assert(m_machine != nullptr); return *m_machine; }

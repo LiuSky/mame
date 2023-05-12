@@ -12,6 +12,10 @@
 //#include "emuopts.h"
 //#include "uiinput.h"
 
+// include this to get mame_ui_manager, sigh
+//#include "../frontend/mame/ui/ui.h"
+
+
 // MAMEOS headers
 #include "iososd.h"
 
@@ -34,13 +38,13 @@ static int get_key(void *device, void *item)
 static int get_axis(void *device, void *item)
 {
     float value = *(float*)item;
-    return (int)(value * osd::INPUT_ABSOLUTE_MAX);
+    return (int)(value * osd::input_device::ABSOLUTE_MAX);
 }
 
 static int get_axis_neg(void *device, void *item)
 {
     float value = *(float*)item;
-    return (int)(value * osd::INPUT_ABSOLUTE_MAX * -1);
+    return (int)(value * osd::input_device::ABSOLUTE_MIN);
 }
 
 static int get_mouse(void *device, void *item)
@@ -89,7 +93,7 @@ void ios_osd_interface::input_init()
             continue;
 
         const char* name = machine().input().standard_token(itemid);
-        keyboard->add_item(name, itemid, get_key, &g_input.keyboard[key]);
+        keyboard->add_item(name, "", itemid, get_key, &g_input.keyboard[key]);
     }
     
     // joystick
@@ -98,32 +102,32 @@ void ios_osd_interface::input_init()
         snprintf(name, sizeof(name)-1, "Joy %d", i+1);
         input_device* joystick = &machine().input().device_class(DEVICE_CLASS_JOYSTICK).add_device(name, name);
         
-        joystick->add_item("LX Axis", ITEM_ID_XAXIS,  get_axis,     &g_input.joy_analog[i][MYOSD_AXIS_LX]);
-        joystick->add_item("LY Axis", ITEM_ID_YAXIS,  get_axis_neg, &g_input.joy_analog[i][MYOSD_AXIS_LY]);
-        joystick->add_item("LZ Axis", ITEM_ID_ZAXIS,  get_axis,     &g_input.joy_analog[i][MYOSD_AXIS_LZ]);
-        joystick->add_item("RX Axis", ITEM_ID_RXAXIS, get_axis,     &g_input.joy_analog[i][MYOSD_AXIS_RX]);
-        joystick->add_item("RY Axis", ITEM_ID_RYAXIS, get_axis_neg, &g_input.joy_analog[i][MYOSD_AXIS_RY]);
-        joystick->add_item("RZ Axis", ITEM_ID_RZAXIS, get_axis,     &g_input.joy_analog[i][MYOSD_AXIS_RZ]);
+        joystick->add_item("LX Axis", "", ITEM_ID_XAXIS,  get_axis,     &g_input.joy_analog[i][MYOSD_AXIS_LX]);
+        joystick->add_item("LY Axis", "", ITEM_ID_YAXIS,  get_axis_neg, &g_input.joy_analog[i][MYOSD_AXIS_LY]);
+        joystick->add_item("LZ Axis", "", ITEM_ID_ZAXIS,  get_axis,     &g_input.joy_analog[i][MYOSD_AXIS_LZ]);
+        joystick->add_item("RX Axis", "", ITEM_ID_RXAXIS, get_axis,     &g_input.joy_analog[i][MYOSD_AXIS_RX]);
+        joystick->add_item("RY Axis", "", ITEM_ID_RYAXIS, get_axis_neg, &g_input.joy_analog[i][MYOSD_AXIS_RY]);
+        joystick->add_item("RZ Axis", "", ITEM_ID_RZAXIS, get_axis,     &g_input.joy_analog[i][MYOSD_AXIS_RZ]);
      
-        joystick->add_item("A", ITEM_ID_BUTTON1, get_button, BTN(joy_status[i], MYOSD_A));
-        joystick->add_item("B", ITEM_ID_BUTTON2, get_button, BTN(joy_status[i], MYOSD_B));
-        joystick->add_item("Y", ITEM_ID_BUTTON3, get_button, BTN(joy_status[i], MYOSD_Y));
-        joystick->add_item("X", ITEM_ID_BUTTON4, get_button, BTN(joy_status[i], MYOSD_X));
-        joystick->add_item("L", ITEM_ID_BUTTON5, get_button, BTN(joy_status[i], MYOSD_L1));
-        joystick->add_item("R", ITEM_ID_BUTTON6, get_button, BTN(joy_status[i], MYOSD_R1));
+        joystick->add_item("A", "", ITEM_ID_BUTTON1, get_button, BTN(joy_status[i], MYOSD_A));
+        joystick->add_item("B", "", ITEM_ID_BUTTON2, get_button, BTN(joy_status[i], MYOSD_B));
+        joystick->add_item("Y", "", ITEM_ID_BUTTON3, get_button, BTN(joy_status[i], MYOSD_Y));
+        joystick->add_item("X", "", ITEM_ID_BUTTON4, get_button, BTN(joy_status[i], MYOSD_X));
+        joystick->add_item("L", "", ITEM_ID_BUTTON5, get_button, BTN(joy_status[i], MYOSD_L1));
+        joystick->add_item("R", "", ITEM_ID_BUTTON6, get_button, BTN(joy_status[i], MYOSD_R1));
         
-        joystick->add_item("L2", ITEM_ID_BUTTON7, get_button, BTN(joy_status[i], MYOSD_L2));
-        joystick->add_item("R2", ITEM_ID_BUTTON8, get_button, BTN(joy_status[i], MYOSD_R2));
-        joystick->add_item("L3", ITEM_ID_BUTTON9, get_button, BTN(joy_status[i], MYOSD_L3));
-        joystick->add_item("R3", ITEM_ID_BUTTON10,get_button, BTN(joy_status[i], MYOSD_R3));
+        joystick->add_item("L2", "", ITEM_ID_BUTTON7, get_button, BTN(joy_status[i], MYOSD_L2));
+        joystick->add_item("R2", "", ITEM_ID_BUTTON8, get_button, BTN(joy_status[i], MYOSD_R2));
+        joystick->add_item("L3", "", ITEM_ID_BUTTON9, get_button, BTN(joy_status[i], MYOSD_L3));
+        joystick->add_item("R3", "", ITEM_ID_BUTTON10,get_button, BTN(joy_status[i], MYOSD_R3));
 
-        joystick->add_item("Select", ITEM_ID_SELECT, get_button, BTN(joy_status[i], MYOSD_SELECT));
-        joystick->add_item("Start",  ITEM_ID_START,  get_button, BTN(joy_status[i], MYOSD_START));
+        joystick->add_item("Select", "", ITEM_ID_SELECT, get_button, BTN(joy_status[i], MYOSD_SELECT));
+        joystick->add_item("Start",  "", ITEM_ID_START,  get_button, BTN(joy_status[i], MYOSD_START));
         
-        joystick->add_item("D-Pad Up",    ITEM_ID_HAT1UP,    get_button, BTN(joy_status[i], MYOSD_UP));
-        joystick->add_item("D-Pad Down",  ITEM_ID_HAT1DOWN,  get_button, BTN(joy_status[i], MYOSD_DOWN));
-        joystick->add_item("D-Pad Left",  ITEM_ID_HAT1LEFT,  get_button, BTN(joy_status[i], MYOSD_LEFT));
-        joystick->add_item("D-Pad Right", ITEM_ID_HAT1RIGHT, get_button, BTN(joy_status[i], MYOSD_RIGHT));
+        joystick->add_item("D-Pad Up",    "", ITEM_ID_HAT1UP,    get_button, BTN(joy_status[i], MYOSD_UP));
+        joystick->add_item("D-Pad Down",  "", ITEM_ID_HAT1DOWN,  get_button, BTN(joy_status[i], MYOSD_DOWN));
+        joystick->add_item("D-Pad Left",  "", ITEM_ID_HAT1LEFT,  get_button, BTN(joy_status[i], MYOSD_LEFT));
+        joystick->add_item("D-Pad Right", "", ITEM_ID_HAT1RIGHT, get_button, BTN(joy_status[i], MYOSD_RIGHT));
     }
     
     // mice
@@ -132,12 +136,12 @@ void ios_osd_interface::input_init()
         snprintf(name, sizeof(name)-1, "Mouse %d", i+1);
         input_device* mouse = &machine().input().device_class(DEVICE_CLASS_MOUSE).add_device(name, name);
 
-        mouse->add_item("X Axis", ITEM_ID_XAXIS, get_mouse, &g_input.mouse_x[i]);
-        mouse->add_item("Y Axis", ITEM_ID_YAXIS, get_mouse, &g_input.mouse_y[i]);
-        mouse->add_item("Z Axis", ITEM_ID_ZAXIS, get_mouse, &g_input.mouse_z[i]);
-        mouse->add_item("Left",   ITEM_ID_BUTTON1, get_button, BTN(mouse_status[i], MYOSD_A));
-        mouse->add_item("Middle", ITEM_ID_BUTTON2, get_button, BTN(mouse_status[i], MYOSD_Y));
-        mouse->add_item("Right",  ITEM_ID_BUTTON3, get_button, BTN(mouse_status[i], MYOSD_B));
+        mouse->add_item("X Axis", "", ITEM_ID_XAXIS, get_mouse, &g_input.mouse_x[i]);
+        mouse->add_item("Y Axis", "", ITEM_ID_YAXIS, get_mouse, &g_input.mouse_y[i]);
+        mouse->add_item("Z Axis", "", ITEM_ID_ZAXIS, get_mouse, &g_input.mouse_z[i]);
+        mouse->add_item("Left",   "", ITEM_ID_BUTTON1, get_button, BTN(mouse_status[i], MYOSD_A));
+        mouse->add_item("Middle", "", ITEM_ID_BUTTON2, get_button, BTN(mouse_status[i], MYOSD_Y));
+        mouse->add_item("Right",  "", ITEM_ID_BUTTON3, get_button, BTN(mouse_status[i], MYOSD_B));
     }
     
     // lightgun
@@ -146,10 +150,10 @@ void ios_osd_interface::input_init()
         snprintf(name, sizeof(name)-1, "Lightgun %d", i+1);
         input_device* lightgun = &machine().input().device_class(DEVICE_CLASS_LIGHTGUN).add_device(name, name);
         
-        lightgun->add_item("X Axis", ITEM_ID_XAXIS, get_axis, &g_input.lightgun_x[i]);
-        lightgun->add_item("Y Axis", ITEM_ID_YAXIS, get_axis_neg, &g_input.lightgun_y[i]);
-        lightgun->add_item("A", ITEM_ID_BUTTON1, get_button, BTN(lightgun_status[i], MYOSD_A));
-        lightgun->add_item("B", ITEM_ID_BUTTON2, get_button, BTN(lightgun_status[i], MYOSD_B));
+        lightgun->add_item("X Axis", "", ITEM_ID_XAXIS, get_axis, &g_input.lightgun_x[i]);
+        lightgun->add_item("Y Axis", "", ITEM_ID_YAXIS, get_axis_neg, &g_input.lightgun_y[i]);
+        lightgun->add_item("A", "", ITEM_ID_BUTTON1, get_button, BTN(lightgun_status[i], MYOSD_A));
+        lightgun->add_item("B", "", ITEM_ID_BUTTON2, get_button, BTN(lightgun_status[i], MYOSD_B));
     }
 }
 
@@ -329,7 +333,7 @@ void input_profile_init(running_machine &machine)
 //============================================================
 //  update
 //============================================================
-void ios_osd_interface::input_update()
+void ios_osd_interface::input_update(bool relative_reset)
 {
     osd_printf_verbose("ios_osd_interface::input_update\n");
     
@@ -349,7 +353,10 @@ void ios_osd_interface::input_update()
 
     // determine if we should disable the rest of the UI
     bool has_keyboard = g_input.num_keyboard != 0; // machine_info().has_keyboard();
-    bool ui_disabled = (has_keyboard && !machine().ui_active());
+    
+    //mame_ui_manager *ui = dynamic_cast<mame_ui_manager *>(&machine.ui());
+    //bool ui_disabled = (has_keyboard && !ui->ui_active());
+    bool ui_disabled = (has_keyboard && false);
 
     // set the current input mode
     g_input.input_mode = in_menu ? MYOSD_INPUT_MODE_MENU : (ui_disabled ? MYOSD_INPUT_MODE_KEYBOARD : MYOSD_INPUT_MODE_NORMAL);
@@ -364,6 +371,14 @@ void ios_osd_interface::input_update()
     
     if (g_input.keyboard[MYOSD_KEY_RESET] != 0 && !machine().hard_reset_pending())
         machine().schedule_hard_reset();
+}
+
+//============================================================
+//  check_osd_inputs
+//============================================================
+
+void ios_osd_interface::check_osd_inputs()
+{
 }
 
 //============================================================

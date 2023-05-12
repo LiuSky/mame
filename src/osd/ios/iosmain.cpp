@@ -17,6 +17,7 @@
 #include "osdepend.h"
 #include "emu.h"
 #include "emuopts.h"
+#include "main.h"
 #include "fileio.h"
 #include "gamedrv.h"
 #include "drivenum.h"
@@ -160,7 +161,7 @@ ios_osd_interface::~ios_osd_interface()
 //  output_callback  - callback for osd_printf_...
 //-------------------------------------------------
 
-void ios_osd_interface::output_callback(osd_output_channel channel, const util::format_argument_pack<std::ostream> &args)
+void ios_osd_interface::output_callback(osd_output_channel channel, const util::format_argument_pack<char> &args)
 {
     if (channel == OSD_OUTPUT_CHANNEL_VERBOSE && !m_verbose)
         return;
@@ -208,6 +209,15 @@ static void get_game_info(myosd_game_info* info, const game_driver *driver, runn
     char                        name[MAX_DRIVER_NAME_CHARS + 1]; // short name of the game
     */
     
+    //
+    // MAME does not do device types anymore! (MAME 0.252+)
+    //
+    // what we are going to do is assume if a machine has no software list or media then it is an ARCADE
+    // if it has keyboard input then it is a COMPUTER
+    //
+    info->type = MYOSD_GAME_TYPE_ARCADE;
+
+    /*
     int type = (driver->flags & machine_flags::MASK_TYPE);
     
     if (type == MACHINE_TYPE_ARCADE)
@@ -218,6 +228,7 @@ static void get_game_info(myosd_game_info* info, const game_driver *driver, runn
         info->type = MYOSD_GAME_TYPE_COMPUTER;
     else
         info->type = MYOSD_GAME_TYPE_OTHER;
+    */
 
     info->source_file  = driver->type.source();
     info->parent       = driver->parent;
@@ -258,7 +269,6 @@ static void get_game_info(myosd_game_info* info, const game_driver *driver, runn
     }
     
     // get software lists for this system
-    if (type == MACHINE_TYPE_CONSOLE || type == MACHINE_TYPE_COMPUTER)
     {
         static std::unordered_set<std::string> g_software;
         std::string software;
@@ -279,7 +289,7 @@ static void get_game_info(myosd_game_info* info, const game_driver *driver, runn
             if (!img.user_loadable())
                 continue;
 
-            osd_printf_debug("MEDIA: %s[%s]: '%s' (%s)\n", driver->name, img.brief_instance_name(), img.image_type_name(), img.file_extensions());
+            osd_printf_debug("MEDIA: %s[%s]: '%s' (%s)%s\n", driver->name, img.brief_instance_name(), img.image_type_name(), img.file_extensions(), (img.must_be_loaded() ? "*" : ""));
 
             std::string media_type = img.brief_instance_name();
             
@@ -303,8 +313,18 @@ static void get_game_info(myosd_game_info* info, const game_driver *driver, runn
             }
         }
 
-        osd_printf_debug("SOFTWARE: '%s'\n", software.c_str());
-        info->software_list = g_software.insert(software).first->c_str();
+        if (software.size() != 0)
+        {
+            osd_printf_debug("SOFTWARE: '%s'\n", software.c_str());
+            info->software_list = g_software.insert(software).first->c_str();
+        }
+    }
+
+    if (info->software_list != NULL && info->software_list[0] != 0) {
+        info->type = MYOSD_GAME_TYPE_CONSOLE;
+        
+        if (false)
+            info->type = MYOSD_GAME_TYPE_COMPUTER;
     }
 }
 
@@ -337,15 +357,11 @@ static std::vector<std::string> get_romless_machines(running_machine &machine)
         {
             game_driver const &driver(driver_list::driver(i));
             machine_config config(driver, machine.options());
-            int type = (driver.flags & machine_flags::MASK_TYPE);
             
             if (&driver == &GAME_NAME(___empty))
                 continue;
             
-            if (!(type == MACHINE_TYPE_CONSOLE || type == MACHINE_TYPE_ARCADE))
-                continue;
-            
-            if (driver.flags & (MACHINE_NOT_WORKING | MACHINE_NO_SOUND | MACHINE_IS_INCOMPLETE))
+            if (driver.flags & (MACHINE_NOT_WORKING | MACHINE_NO_SOUND | MACHINE_IS_INCOMPLETE | MACHINE_NO_SOUND_HW | MACHINE_MECHANICAL))
                 continue;
             
             int num_roms = 0;
