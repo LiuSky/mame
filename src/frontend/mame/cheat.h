@@ -275,9 +275,10 @@ public:
 	// per-frame update
 	void frame_update() { if (m_state == SCRIPT_STATE_RUN) execute_run_script(); }
 
-private:
-	// internal helpers
+    //该方法用于设置该作弊项的状态，即将该作弊项的状态更改为指定的状态。如果状态更改成功，则返回 true；否则返回 false
 	bool set_state(script_state newstate);
+
+private:
 	std::unique_ptr<cheat_script> &script_for_state(script_state state);
 
 	// internal state

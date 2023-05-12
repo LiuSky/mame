@@ -50,6 +50,8 @@ project ("osd_" .. _OPTIONS["osd"])
 		MAME_DIR .. "src/osd",
 		MAME_DIR .. "src/lib",
 		MAME_DIR .. "src/lib/util",
+        MAME_DIR .. "src/frontend/mame",
+        MAME_DIR .. "src/frontend/mame/ui",
 --		MAME_DIR .. "src/osd/modules/file",
 --		MAME_DIR .. "src/osd/modules/render",
 		MAME_DIR .. "3rdparty",
@@ -63,6 +65,7 @@ project ("osd_" .. _OPTIONS["osd"])
         MAME_DIR .. "src/osd/ios/video.cpp",
         MAME_DIR .. "src/osd/ios/sound.cpp",
         MAME_DIR .. "src/osd/ios/input.cpp",
+        MAME_DIR .. "src/osd/ios/iososd.cpp",
         MAME_DIR .. "src/osd/ios/osdlib.cpp",
         MAME_DIR .. "src/osd/ios/paste.mm",
 	}
@@ -90,6 +93,8 @@ project ("ocore_" .. _OPTIONS["osd"])
 		MAME_DIR .. "src/lib",
 		MAME_DIR .. "src/lib/util",
 		MAME_DIR .. "src/osd/ios",
+        MAME_DIR .. "src/frontend/mame",
+        MAME_DIR .. "src/frontend/mame/ui",
 	}
 
 	files {

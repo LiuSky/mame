@@ -1,23 +1,3 @@
-//============================================================
-//
-//  libmame.h - PUBLIC interface to the LIBMAME core/library
-//
-//  Copyright (c) 1996-2007, Nicola Salmoria and the MAME Team.
-//  Visit http://mamedev.org for licensing and usage restrictions.
-//
-//  MAME4DROID MAME4iOS by David Valdeita (Seleuco)
-//
-//  this is the PUBLIC interface used by MAME4iOS to talk to the MAME core
-//  for historical reasons this interface is refered to as MYOSD
-//  if it makes you feel better, just pretend MYOSD stands for
-//  [M]ame e[Y]e[OS] [D]river (aka MAME-iOS-DRIVER)
-//
-//  FUNCTIONS:
-//      myosd_main
-//      myosd_get
-//      myosd_set
-//
-//============================================================
 
 #include <stdint.h>
 
@@ -27,6 +7,7 @@
 #if defined(__cplusplus)
 extern "C" {
 #endif
+
 
 enum MYOSD_STATUS {
     MYOSD_UP=0x1,       MYOSD_LEFT=0x4,       MYOSD_DOWN=0x10,   MYOSD_RIGHT=0x40,
@@ -352,18 +333,25 @@ enum myosd_keycode
     MYOSD_KEY_RESET,
 };
 
-// myosd_get and myosd_set - get and set global state from the MAME driver.
 
-enum {
-    MYOSD_VERSION,              // GET: MAME version number (ie 139 or 229)
-    MYOSD_VERSION_STRING,       // GET: MAME version string (ie "0.139u1 (date)")
-    MYOSD_DISPLAY_WIDTH,        // SET: maximum width and height of "screen" to display
-    MYOSD_DISPLAY_HEIGHT,
-    MYOSD_FPS,                  // GET, SET: show framerate
-    MYOSD_SPEED,                // GET, SET: emulation speed (100 = 100%)
+/// @brief MYOSD action codes
+enum myosd_actionCode {
+    MYOSD_DISPLAY_WIDTH,        // SET: 设置屏幕宽度
+    MYOSD_DISPLAY_HEIGHT,       // SET: 设置屏幕高度
+    MYOSD_SPEED,                // GET, SET: 模拟器速度 (100 = 100%)
+    MYOSD_SOUND,                // SET,GET: 声音: 1:开, 0:关
+    MYOSD_ICON,                 // GET: 当前投币数量
+    MYOSD_INVALID = -9999,       // 无效的操作
 };
-extern intptr_t myosd_get(int var);
-extern void myosd_set(int var, intptr_t value);
+
+/// @brief 回调类型
+enum myosd_callbackCode {
+    MYOSD_CALLBACK_INIT = 1,
+    MYOSD_CALLBACK_EXIT,
+    MYOSD_CALLBACK_SAVE,
+    MYOSD_CALLBACK_LOAD,
+};
+
 
 // MYOSD app callback functions
 typedef struct {
@@ -388,10 +376,65 @@ typedef struct {
     void (*sound_play)(void *buff, int len);
     void (*sound_exit)(void);
 
+    /// 结果回调(type:myosd_callbackCode， result：true成功，false失败， msg: 错误提示)
+    void (*result_callback)(int type, bool result, const char * msg);
+
 }   myosd_callbacks;
 
-// main entry point
+/// @brief 主函数入口
+/// @param argc 参数数量
+/// @param argv 参数值
+/// @param callbacks 回调
+/// @param callbacks_size 回调函数大小 
+/// @return int(0: 代表成功，其他任何值: 代表失败)
 extern int myosd_main(int argc, char** argv, myosd_callbacks* callbacks, size_t callbacks_size);
+
+
+/// @brief 获取枚举值
+/// @param var myosd_actionCode
+/// @return 
+extern int myosd_get(int var);
+
+/// @brief 设置动作枚举值
+/// @param var myosd_actionCode
+/// @param value 具体值
+extern void myosd_set(int var, int value);
+
+
+/// @brief 保存当前游戏
+/// @param fileName 
+extern void myosd_save(const char *fileName);
+
+/// @brief 加载当前游戏
+/// @param fileName 
+extern void myosd_load(const char *fileName);
+
+/// @brief 暂停游戏
+extern void myosd_pause();
+
+/// @brief 恢复游戏
+extern void myosd_resume();
+
+/// @brief 是否暂停
+/// @return true: 当前为暂停状态, flase: 没有暂停
+extern bool myosd_paused();
+
+/// @brief 退出游戏
+extern void myosd_exit();
+
+/// @brief 获取金手指字符串文本
+/// @return 字符串
+extern const char * myosd_cheat();
+
+/// @brief 执行金手指开关脚本
+/// @param index 索引
+/// @param isOpen 是否打开
+/// @return 是否成功(失败的话会打印相对应的日志)
+extern bool myosd_cheatSwitchScript(int index, bool isOpen);
+
+/// @brief 显示或者关闭菜单栏
+extern void myosd_ShowMenu();
+
 
 #if defined(__cplusplus)
 }

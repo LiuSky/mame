@@ -32,9 +32,10 @@ void ios_osd_interface::sound_init()
     }
 
     m_sample_rate = options().sample_rate();
-
+    m_isSound = true;
+   
     if (strcmp(options().value(OPTION_SOUND), "none") == 0)
-        m_sample_rate = 0;
+        m_isSound = false;
     
     if (m_sample_rate != 0)
     {
@@ -83,7 +84,7 @@ void ios_osd_interface::update_audio_stream(const int16_t *buffer, int samples_t
 
     static unsigned char bufferatt[882*2*2*10];
 
-    if (m_sample_rate != 0 )
+    if (m_isSound)
     {
         if (m_attenuation != 0)
         {

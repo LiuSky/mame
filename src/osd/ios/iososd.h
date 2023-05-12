@@ -22,8 +22,11 @@
 //============================================================
 // MYOSD globals
 //============================================================
+class ios_osd_interface;
+
 extern int myosd_display_width;
 extern int myosd_display_height;
+extern ios_osd_interface *osd_shared;
 
 //============================================================
 //  OPTIONS
@@ -35,6 +38,26 @@ extern int myosd_display_height;
 #define OPTION_SOUND    "sound"
 #define OPTION_VIDEO    "video"
 #define OPTION_NUMPROCESSORS "numprocessors"
+
+//============================================================
+//  OPTIONS
+//============================================================
+static const options_entry s_option_entries[] =
+{
+    //  { OPTION_INIPATH,       INI_PATH,   OPTION_STRING,     "path to ini files" },
+
+    // MYOSD options
+    { nullptr,              nullptr,    core_options::option_type::HEADER,      "MYOSD OPTIONS" },
+    { OPTION_VIDEO,         "metal",    core_options::option_type::STRING,      "video output method: none,metal" },
+    { OPTION_SOUND,         "ios",      core_options::option_type::STRING,      "sound output method: none,ios" },
+    { OPTION_HISCORE,       "0",        core_options::option_type::BOOLEAN,     "enable hiscore system" },
+    { OPTION_BEAM,          "1.0",      core_options::option_type::FLOAT,       "set vector beam width maximum" },
+    { OPTION_BENCH,         "0",        core_options::option_type::INTEGER,     "benchmark for the given number of emulated seconds" },
+    { OPTION_NUMPROCESSORS, "auto",     core_options::option_type::STRING,      "number of processors; this overrides the number the system reports" },
+
+    { nullptr }
+};
+
 
 //============================================================
 //  TYPE DEFINITIONS
@@ -89,6 +112,11 @@ public:
     running_machine &machine() const { assert(m_machine != nullptr); return *m_machine; }
     render_target *target() const { assert(m_target != nullptr); return m_target; }
     emu_options &options() { return m_options; }
+
+    myosd_callbacks callbacks() { return  m_callbacks; }
+
+    // 设置是否播放声音
+	bool m_isSound;
 
 private:
     void video_init();
