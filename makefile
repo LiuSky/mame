@@ -105,7 +105,7 @@
 
 # SOURCES = src/mame/atari/asteroid.cpp,src/mame/cinemat/cchasm.cpp
 
-# SOURCEFILTER = mydrivers.flt
+SOURCEFILTER = mydrivers.flt
 
 # FORCE_VERSION_COMPILE = 1
 
