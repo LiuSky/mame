@@ -574,7 +574,7 @@ void running_machine::set_saveload_filename(std::string &&filename)
 //  soon as possible
 //-------------------------------------------------
 
-void running_machine::schedule_save(std::string &&filename)
+void running_machine::schedule_save(std::string &&filename, boolResult_callback callback)
 {
 	// specify the filename to save or load
 	set_saveload_filename(std::move(filename));
@@ -584,7 +584,7 @@ void running_machine::schedule_save(std::string &&filename)
 	m_saveload_schedule_time = this->time();
 
 	// we can't be paused since we need to clear out anonymous timers
-	resume();
+	//resume();
 }
 
 
@@ -611,7 +611,7 @@ void running_machine::immediate_save(std::string_view filename)
 //  soon as possible
 //-------------------------------------------------
 
-void running_machine::schedule_load(std::string &&filename)
+void running_machine::schedule_load(std::string &&filename, boolResult_callback callback)
 {
 	// specify the filename to save or load
 	set_saveload_filename(std::move(filename));
@@ -621,7 +621,7 @@ void running_machine::schedule_load(std::string &&filename)
 	m_saveload_schedule_time = this->time();
 
 	// we can't be paused since we need to clear out anonymous timers
-	resume();
+	//resume();
 }
 
 
@@ -858,7 +858,8 @@ void running_machine::handle_saveload()
 {
 	// if no name, bail
 	if (!m_saveload_pending_file.empty())
-	{
+	{   
+		std::string error_message;
 		const char *const opname = (m_saveload_schedule == saveload_schedule::LOAD) ? "load" : "save";
 
 		// if there are anonymous timers, we can't save just yet, and we can't load yet either
@@ -866,10 +867,16 @@ void running_machine::handle_saveload()
 		if (!m_scheduler.can_save())
 		{
 			// if more than a second has passed, we're probably screwed
-			if ((this->time() - m_saveload_schedule_time) > attotime::from_seconds(1))
-				popmessage("Unable to %s due to pending anonymous timers. See error.log for details.", opname);
-			else
+			if ((this->time() - m_saveload_schedule_time) > attotime::from_seconds(1)) {
+				error_message = string_format("Unable to %s due to pending anonymous timers. See error.log for details.\n", opname);
+				if (m_saveload_callback != nullptr)
+					m_saveload_callback(false, error_message);
+				else
+					osd_printf_debug(error_message);
+			}
+			else {
 				return; // return without cancelling the operation
+			}
 		}
 		else
 		{
@@ -889,31 +896,63 @@ void running_machine::handle_saveload()
 				switch (saverr)
 				{
 				case STATERR_ILLEGAL_REGISTRATIONS:
-					popmessage("Error: Unable to %s state due to illegal registrations. See error.log for details.", opname);
+					error_message = string_format("Error: Unable to %s state due to illegal registrations. See error.log for details.\n", opname);
+					if (m_saveload_callback != nullptr)
+						m_saveload_callback(false, error_message);
+					else
+						osd_printf_debug(error_message);
 					break;
 
 				case STATERR_INVALID_HEADER:
-					popmessage("Error: Unable to %s state due to an invalid header. Make sure the save state is correct for this machine.", opname);
+					error_message = string_format("Error: Unable to %s state due to an invalid header. Make sure the save state is correct for this machine.\n", opname);
+					if (m_saveload_callback != nullptr)
+						m_saveload_callback(false, error_message);
+					else
+						osd_printf_debug(error_message);
 					break;
 
 				case STATERR_READ_ERROR:
-					popmessage("Error: Unable to %s state due to a read error (file is likely corrupt).", opname);
+					error_message = string_format("Error: Unable to %s state due to a read error (file is likely corrupt).\n", opname);
+					if (m_saveload_callback != nullptr)
+						m_saveload_callback(false, error_message);
+					else
+						osd_printf_debug(error_message);
 					break;
 
 				case STATERR_WRITE_ERROR:
-					popmessage("Error: Unable to %s state due to a write error. Verify there is enough disk space.", opname);
+					error_message = string_format("Error: Unable to %s state due to a write error. Verify there is enough disk space.\n", opname);
+					if (m_saveload_callback != nullptr)
+						m_saveload_callback(false, error_message);
+					else
+						osd_printf_debug(error_message);
 					break;
 
 				case STATERR_NONE:
 					if (!(m_system.flags & MACHINE_SUPPORTS_SAVE))
-						popmessage("State successfully %s.\nWarning: Save states are not officially supported for this machine.", opnamed);
+					{
+						error_message = string_format("State successfully %s.\nWarning: Save states are not officially supported for this machine.\n", opnamed);
+						if (m_saveload_callback != nullptr)
+							m_saveload_callback(true, error_message);
+						else
+							osd_printf_debug(error_message);
+					}
 					else
-						popmessage("State successfully %s.", opnamed);
+					{
+						error_message = string_format("%s successfully\n", opnamed);
+						if (m_saveload_callback != nullptr)
+							m_saveload_callback(true, error_message);
+						else
+							osd_printf_debug(error_message);
+					}
 					break;
 
 				default:
-					popmessage("Error: Unknown error during state %s.", opnamed);
-					break;
+					error_message = string_format("Error: Unknown error during state %s.\n", opnamed);
+					if (m_saveload_callback != nullptr)
+						m_saveload_callback(false, error_message);
+					else
+						osd_printf_debug(error_message);
+						break;
 				}
 
 				// close and perhaps delete the file
@@ -922,12 +961,19 @@ void running_machine::handle_saveload()
 			}
 			else if ((openflags == OPEN_FLAG_READ) && (std::errc::no_such_file_or_directory == filerr))
 			{
-				// attempt to load a non-existent savestate, report empty slot
-				popmessage("Error: No savestate file to load.", opname);
+				error_message = string_format("Error: No savestate file to load.\n", opname);
+				if (m_saveload_callback != nullptr)
+					m_saveload_callback(false, error_message);
+				else 
+				    osd_printf_debug(error_message);
 			}
 			else
 			{
-				popmessage("Error: Failed to open file for %s operation.", opname);
+				error_message = string_format("Error: Failed to open file for %s operation.\n", opname);
+				if (m_saveload_callback != nullptr)
+					m_saveload_callback(false, error_message);
+				else 
+				   osd_printf_debug(error_message);
 			}
 		}
 	}

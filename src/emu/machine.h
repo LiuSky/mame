@@ -106,6 +106,7 @@ class running_machine
 	friend class memory_manager;
 
 	typedef std::function<void (const char*)> logerror_callback;
+	typedef std::function<void(bool, std::string)> boolResult_callback;
 
 public:
 	// construction/destruction
@@ -187,8 +188,8 @@ public:
 	void schedule_exit();
 	void schedule_hard_reset();
 	void schedule_soft_reset();
-	void schedule_save(std::string &&filename);
-	void schedule_load(std::string &&filename);
+	void schedule_save(std::string &&filename, boolResult_callback callback = nullptr);
+	void schedule_load(std::string &&filename, boolResult_callback callback = nullptr);
 
 	// date & time
 	void base_datetime(system_time &systime);
@@ -312,6 +313,7 @@ private:
 	attotime                m_saveload_schedule_time;
 	std::string             m_saveload_pending_file;
 	const char *            m_saveload_searchpath;
+	boolResult_callback     m_saveload_callback; //加载保存callback回调
 
 	// notifier callbacks
 	struct notifier_callback_item
