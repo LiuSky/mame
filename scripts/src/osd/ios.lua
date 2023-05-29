@@ -56,6 +56,7 @@ project ("osd_" .. _OPTIONS["osd"])
 --		MAME_DIR .. "src/osd/modules/render",
 		MAME_DIR .. "3rdparty",
 		MAME_DIR .. "src/osd/ios",
+        ext_includedir("rapidjson"),
 	}
 
 	files {
@@ -67,6 +68,7 @@ project ("osd_" .. _OPTIONS["osd"])
         MAME_DIR .. "src/osd/ios/input.cpp",
         MAME_DIR .. "src/osd/ios/iososd.cpp",
         MAME_DIR .. "src/osd/ios/osdlib.cpp",
+        MAME_DIR .. "src/osd/ios/inputmacro.cpp",
         MAME_DIR .. "src/osd/ios/paste.mm",
 	}
 

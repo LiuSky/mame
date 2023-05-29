@@ -217,7 +217,6 @@ void input_profile_init(running_machine &machine)
             for (ioport_field &field : port.second->fields())
             {
                 osd_printf_verbose("        FIELD:%s player=%d type=%d way=%d\n", field.name(), field.player(), field.type(), field.way());
-                
                 // walk the input seq and look for highest device/joystick
                 if ((field.type() >= IPT_DIGITAL_JOYSTICK_FIRST && field.type() <= IPT_DIGITAL_JOYSTICK_LAST) ||
                     (field.type() >= IPT_BUTTON1 && field.type() <= IPT_BUTTON12))
@@ -344,6 +343,16 @@ void ios_osd_interface::input_update(bool relative_reset)
             return;
         
         input_profile_init(machine());
+
+        std::function<void(std::string)> callback = [](std::string role) {
+            if (osd_shared->m_callbacks.refresh_role != NULL) 
+            {
+                osd_shared->m_callbacks.refresh_role(strdup(role.c_str()));
+            }
+        };
+        
+        // 输入宏初始化
+        m_inputmacro = std::make_unique<inputmacro_manager>(machine(), callback);
         
         if (m_callbacks.input_init != NULL)
             m_callbacks.input_init(&g_input, sizeof(g_input));

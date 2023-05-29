@@ -262,3 +262,22 @@ extern "C" void myosd_exit()
 {
     OSD_MACHINE.schedule_exit();
 }
+
+//============================================================
+//  刷新宏
+//============================================================
+extern "C" void myosd_macro_reload()
+{
+    osd_shared->inputmacro().reload();
+}
+
+//============================================================
+//  执行输入宏
+//============================================================
+extern "C" void myosd_inputmacro_execute(int player, const char *key, bool* release) 
+{
+    osd_shared->inputmacro().execute(player, key, release, [&](bool result, const std::string& msg)
+    {
+        osd_shared->callbacks().result_callback(MYOSD_CALLBACK_SKILLE, result, strdup(msg.c_str()));
+    });
+}

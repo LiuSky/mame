@@ -350,8 +350,8 @@ enum myosd_callbackCode {
     MYOSD_CALLBACK_EXIT,
     MYOSD_CALLBACK_SAVE,
     MYOSD_CALLBACK_LOAD,
+    MYOSD_CALLBACK_SKILLE,
 };
-
 
 // MYOSD app callback functions
 typedef struct {
@@ -378,6 +378,10 @@ typedef struct {
 
     /// 结果回调(type:myosd_callbackCode， result：true成功，false失败， msg: 错误提示)
     void (*result_callback)(int type, bool result, const char * msg);
+
+
+    /// @brief 刷新角色回调
+    void (*refresh_role)(const char *roleId);
 
 }   myosd_callbacks;
 
@@ -435,6 +439,14 @@ extern bool myosd_cheatSwitchScript(int index, bool isOpen);
 /// @brief 显示或者关闭菜单栏
 extern void myosd_ShowMenu();
 
+/// @brief 刷新宏
+extern void myosd_macro_reload();
+
+/// @brief 执行输入宏
+/// @param player 机位索引(P1: 1, P2: 2, P3: 3, P4: 4)
+/// @param key 一键技能唯一标识Key
+/// @param release 绑定地址是否马上释放(对一些大招有用)
+extern void myosd_inputmacro_execute(int player, const char *key, bool* release);
 
 #if defined(__cplusplus)
 }

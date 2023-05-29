@@ -6,6 +6,7 @@
 #include "modules/font/font_module.h"
 #include "../frontend/mame/ui/menuitem.h"
 
+#include "inputmacro.h"
 #include "libmame.h"
 
 //============================================================
@@ -112,6 +113,7 @@ public:
     running_machine &machine() const { assert(m_machine != nullptr); return *m_machine; }
     render_target *target() const { assert(m_target != nullptr); return m_target; }
     emu_options &options() { return m_options; }
+    inputmacro_manager &inputmacro() const { assert(m_inputmacro != nullptr); return *m_inputmacro; }
 
     myosd_callbacks callbacks() { return  m_callbacks; }
 
@@ -144,6 +146,9 @@ private:
     // audio
     int m_attenuation;
     int m_sample_rate;
+
+    // 输入宏对象
+    std::unique_ptr<inputmacro_manager> m_inputmacro;
 
     // host ios app callbacks
     myosd_callbacks m_callbacks;
