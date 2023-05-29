@@ -48,10 +48,10 @@ struct inputmacro_skill
     /// @brief 技能步骤
     std::vector<inputmacro_step> steps;
 
-    /// @brief 当前执行到的步骤，如果宏指令没有正在执行，则为nil（整数或nil）
+    /// @brief 当前执行到的步骤，默认值为0
     int step;
 
-    /// @brief 当前步骤执行的帧数，从1开始计数（整数）
+    /// @brief 当前步骤执行的帧数，从1开始计数（整数）, 默认值为0
     int frame;
 };
 
