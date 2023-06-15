@@ -14,7 +14,7 @@ typedef std::function<void(std::string)> refreshRole_callback;
 /// @brief 输入宏端口值
 struct inputmacro_mask
 {
-    /// @brief 上下左右ABCDEF对应的端口的值(up:51,down:52,left:53,right:54,a:64,b:65,c:66,d:67)
+    /// @brief 上下左右ABCDEF对应的端口的值(up:51,down:52,left:53,right:54,a:64,b:65,c:66,d:67,e:78,f:69)
     int mask;
 
     inputmacro_mask(int p)
@@ -42,16 +42,16 @@ struct inputmacro_skill
     /// @brief key
     std::string key;
 
-    /// @brief 循环次数默认为不循环(-1)
+    /// @brief 循环(-1为不循环，马上释放技能，0为以用户为基准，按住按键就不放，松开则释放，适用一些大招)
     int loop;
 
     /// @brief 技能步骤
     std::vector<inputmacro_step> steps;
 
-    /// @brief 当前执行到的步骤，默认值为0
+    /// @brief 当前执行到的步骤，如果宏指令没有正在执行，则为nil（整数或nil）
     int step;
 
-    /// @brief 当前步骤执行的帧数，从1开始计数（整数）, 默认值为0
+    /// @brief 当前步骤执行的帧数，从1开始计数（整数）
     int frame;
 };
 
@@ -169,9 +169,22 @@ private:
    void refresh_role();
 
    /// @brief kof角色刷新
-   void role_kof97();
-   void role_kof98();
-   void role_kof99And2000();
+   /// @param game_name 
+   void kof_role_update(std::string &game_name);
+   void kof97_role();
+   void kof98_role();
+   void kof99And2k_role();
+   void kof2k1_role();
+   void kof2k2_role();
+   void kof2k3_role();
+   void kof2k4se_role();
+
+   /// @brief  街霸角色刷新
+   /// @param game_name 
+   void sf_role_update(std::string &game_name);
+   void sf2_role();
+   void sf2ce_role();
+
 
    /// @brief 运行的机器
    running_machine &                                m_machine;
@@ -188,7 +201,11 @@ private:
    /// @brief 角色刷新白名单游戏
    std::vector<std::string>                         m_whitelist;
    /// @brief kof p1死亡人数
-   int                                              m_p1death;  
+   int                                              m_kof_p1death;
+   /// @brief p1角色
+   int                                              m_p1_role;
+   /// @brief 帧数
+   int                                              m_count_frame;
 };
 
 #endif

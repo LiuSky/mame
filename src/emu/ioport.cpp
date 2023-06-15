@@ -2174,6 +2174,7 @@ void ioport_manager::frame_update()
 }
 
 
+
 //-------------------------------------------------
 //  frame_interpolate - interpolate between two
 //  values based on the time between frames

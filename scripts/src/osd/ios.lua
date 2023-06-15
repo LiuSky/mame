@@ -69,6 +69,8 @@ project ("osd_" .. _OPTIONS["osd"])
         MAME_DIR .. "src/osd/ios/iososd.cpp",
         MAME_DIR .. "src/osd/ios/osdlib.cpp",
         MAME_DIR .. "src/osd/ios/inputmacro.cpp",
+        MAME_DIR .. "src/osd/ios/kof_roleupdate.cpp",
+        MAME_DIR .. "src/osd/ios/sf_roleupdate.cpp",
         MAME_DIR .. "src/osd/ios/paste.mm",
 	}
 

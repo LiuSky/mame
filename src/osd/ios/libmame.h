@@ -393,7 +393,6 @@ typedef struct {
 /// @return int(0: 代表成功，其他任何值: 代表失败)
 extern int myosd_main(int argc, char** argv, myosd_callbacks* callbacks, size_t callbacks_size);
 
-
 /// @brief 获取枚举值
 /// @param var myosd_actionCode
 /// @return 
@@ -403,7 +402,6 @@ extern int myosd_get(int var);
 /// @param var myosd_actionCode
 /// @param value 具体值
 extern void myosd_set(int var, int value);
-
 
 /// @brief 保存当前游戏
 /// @param fileName 

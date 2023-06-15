@@ -22,11 +22,14 @@ inputmacro_manager::inputmacro_manager(running_machine &machine, refreshRole_cal
     m_ioportList(),
     m_active_inputs(),
     m_whitelist(),
-    m_p1death(-1)
+    m_kof_p1death(-1),
+    m_p1_role(-1),
+    m_count_frame(0)
+
 {
-    /// 加载数据
+
     load_macro();
-    m_whitelist = {"kof97", "kof98", "kof99", "kof2000"};
+    m_whitelist = {"kof97", "kof97pls", "kof98", "kof99", "kof2000", "kof2001", "kof2002", "kof2003", "kof2k4se", "sf2", "sf2ce"};
 
     // 添加一个每帧执行一次的回调函数
     machine.add_notifier(MACHINE_NOTIFY_FRAME, machine_notify_delegate(&inputmacro_manager::update, this));
@@ -171,15 +174,6 @@ void inputmacro_manager::process_frame()
                     macro->value.frame = 0;
                     to_remove.push_back(macro);
                 }
-                // 如果宏指令需要循环播放，则重新开始播放
-                else if (macro->value.loop > 0)
-                {
-                    // 将宏指令的步骤设置为loop所指定的步骤
-                    macro->value.step = macro->value.loop;
-                    
-                    // 将宏指令的计时器重置为1
-                    macro->value.frame = 1;
-                }
                 // 如果宏指令需要一直执行直到按键释放，则在绑定的按键已经释放时结束该宏指令
                 else if (macro->value.loop < 0)
                 {
@@ -296,126 +290,21 @@ bool inputmacro_manager::left_direction(int player)
 void inputmacro_manager::refresh_role()
 {
    // 判断是否存在在白名单之内
-   bool ip_exist_in_whitelist = std::find(m_whitelist.begin(), m_whitelist.end(), m_machine.basename()) != m_whitelist.end();
+   std::string game_name = m_machine.basename();
+   bool ip_exist_in_whitelist = std::find(m_whitelist.begin(), m_whitelist.end(), game_name) != m_whitelist.end();
    if (ip_exist_in_whitelist)
    {
-      if (m_machine.basename() == "kof97")
+      // 判断名称是否有kof开始，有的话，进入kof系列判断
+      if (game_name.find("kof") != std::string::npos) 
       {
-        role_kof97();
+        kof_role_update(game_name);
       }
-      else if (m_machine.basename() == "kof98")
+      else if (game_name == "sf2" || game_name == "sf2ce")
       {
-        role_kof98();
-      }
-      else if (m_machine.basename() == "kof99" || m_machine.basename() == "kof2000")
-      {
-        role_kof99And2000();
+        sf_role_update(game_name);
       }
    }
 }
-
-//============================================================
-//  kof97角色刷新
-//============================================================
-void inputmacro_manager::role_kof97()
-{
-    cpu_device *main_cpu = downcast<cpu_device*>(m_machine.root_device().subdevice("maincpu"));
-    if (main_cpu != nullptr)
-    {
-        address_space &space = main_cpu->space(AS_PROGRAM);
-        u8 time_data = space.read_byte(0x10A83A);
-        u8 p1_death = space.read_byte(0x10A865);
-        u8 p2_death = space.read_byte(0x10A866);
-        u8 first_role_index = space.read_byte(0x10A851);
-        u8 second_role_index = space.read_byte(0x10A852);
-        u8 third_role_index = space.read_byte(0x10A853);
-        if (p1_death == 3 || p2_death == 3)
-        {
-            m_p1death = -1;
-            m_refreshrole_callback("-1");
-        }
-        else if (p1_death >= 0 && p1_death < 3 && m_p1death != p1_death && time_data > 0 && !(first_role_index == 0 && second_role_index == 0 && third_role_index == 0)) 
-        {
-            m_p1death = p1_death;
-            u8 first_role_key = space.read_byte(0x10A84B);
-            u8 second_role_key = space.read_byte(0x10A84C);
-            u8 third_role_key = space.read_byte(0x10A84D);
-            std::vector<u8> roles = {first_role_key, second_role_key, third_role_key};
-            std::vector<u8> ooa = {first_role_index, second_role_index, third_role_index};
-            m_refreshrole_callback(std::to_string((roles[ooa[m_p1death]])));
-        }
-    }  
-}
-
-//============================================================
-//  kof98角色刷新
-//============================================================
-void inputmacro_manager::role_kof98()
-{
-    cpu_device *main_cpu = downcast<cpu_device*>(m_machine.root_device().subdevice("maincpu"));
-    if (main_cpu != nullptr)
-    {
-        address_space &space = main_cpu->space(AS_PROGRAM);
-
-        u8 time_data = space.read_byte(0x10A83A);
-        u8 p1_death = space.read_byte(0x10A858);
-        u8 p2_death = space.read_byte(0x10A869);
-        u8 first_role_index = space.read_byte(0x10A854);
-        u8 second_role_index = space.read_byte(0x10A855);
-        u8 third_role_index = space.read_byte(0x10A856);
-        if (p1_death == 3 || p2_death == 3)
-        {
-            m_p1death = -1;
-            m_refreshrole_callback("-1");
-        }
-        else if (p1_death >= 0 && p1_death < 3 && m_p1death != p1_death && time_data > 0 && !(first_role_index == 0 && second_role_index == 0 && third_role_index == 0)) 
-        {
-            m_p1death = p1_death;
-            u8 first_role_key = space.read_byte(0x10A84E);
-            u8 second_role_key = space.read_byte(0x10A84F);
-            u8 third_role_key = space.read_byte(0x10A850);
-            std::vector<u8> roles = {first_role_key, second_role_key, third_role_key};
-            std::vector<u8> ooa = {first_role_index, second_role_index, third_role_index};
-            m_refreshrole_callback(std::to_string((roles[ooa[m_p1death]])));
-        }
-    }  
-}
-
-//============================================================
-//  kof99和2000角色刷新
-//============================================================
-void inputmacro_manager::role_kof99And2000()
-{
-    cpu_device *main_cpu = downcast<cpu_device*>(m_machine.root_device().subdevice("maincpu"));
-    if (main_cpu != nullptr)
-    {
-        address_space &space = main_cpu->space(AS_PROGRAM);
-        u8 time_data = space.read_byte(0x10A7E6);
-        u8 p1_death = space.read_byte(0x10A807);
-        u8 p2_death = space.read_byte(0x10A806);
-        u8 first_role_index = space.read_byte(0x10A802);
-        u8 second_role_index = space.read_byte(0x10A803);
-        u8 third_role_index = space.read_byte(0x10A804);
-
-        if (p1_death == 3 || p2_death == 3)
-        {
-            m_p1death = -1;
-            m_refreshrole_callback("-1");
-        }
-        else if (p1_death >= 0 && p1_death < 3 && m_p1death != p1_death && time_data > 0 && !(first_role_index == 0 && second_role_index == 0 && third_role_index == 0)) 
-        {
-            m_p1death = p1_death;
-            u8 first_role_key = space.read_byte(0x10A7FA);
-            u8 second_role_key = space.read_byte(0x10A7FB);
-            u8 third_role_key = space.read_byte(0x10A7FC);
-            u8 fourth_role_key = space.read_byte(0x10A7FD);
-            std::vector<u8> roles = {first_role_key, second_role_key, third_role_key, fourth_role_key};
-            std::vector<u8> ooa = {first_role_index, second_role_index, third_role_index};
-            m_refreshrole_callback(std::to_string((roles[ooa[m_p1death]])));
-        }
-    }  
-}
-
 
 
 //============================================================
@@ -445,7 +334,9 @@ void inputmacro_manager::reload()
     m_active_macro.clear();
     m_ioportList.clear();
     m_active_inputs.clear();
-    m_p1death = -1;
+    m_kof_p1death = -1;
+    m_p1_role = -1;
+    m_count_frame = 0;
     load_macro();
 }
 
