@@ -14,7 +14,7 @@ typedef std::function<void(std::string)> refreshRole_callback;
 /// @brief 输入宏端口值
 struct inputmacro_mask
 {
-    /// @brief 上下左右ABCDEF对应的端口的值(up:51,down:52,left:53,right:54,a:64,b:65,c:66,d:67,e:78,f:69)
+    /// @brief 上下左右ABCDEF对应的端口的值(up:51,down:52,left:53,right:54,a:64,b:65,c:66,d:67,e:68,f:69)
     int mask;
 
     inputmacro_mask(int p)
@@ -42,8 +42,8 @@ struct inputmacro_skill
     /// @brief key
     std::string key;
 
-    /// @brief 循环(-1为不循环，马上释放技能，0为以用户为基准，按住按键就不放，松开则释放，适用一些大招)
-    int loop;
+    /// @brief 循环(1:马上释放技能。2:为以用户为基准，按住按键就不放，松开则释放，适用一些大招。 3:turbo半自动连发功能。4:autofire自动连发功能)
+    int type;
 
     /// @brief 技能步骤
     std::vector<inputmacro_step> steps;
@@ -83,9 +83,6 @@ struct inputmacro
 {
     /// @brief 方向地址
     std::vector<inputmacro_direction_address> direction_address;
-
-    /// @brief 端口Key列表(用来判断输入端口那几个端口)
-    std::vector<std::string> portKeylist;
 
     /// @brief 角色列表
     std::vector<inputmacro_role> rolelist;
@@ -207,5 +204,6 @@ private:
    /// @brief 帧数
    int                                              m_count_frame;
 };
+
 
 #endif

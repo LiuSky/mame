@@ -9,22 +9,20 @@
 #include <algorithm>
 #include "inputmacro.h"
 
-
-
 //============================================================
 //  初始化
 //============================================================
 inputmacro_manager::inputmacro_manager(running_machine &machine, refreshRole_callback callback)
-	: m_machine(machine),
-    m_refreshrole_callback(callback),
-    m_inputmacro(std::make_unique<inputmacro>()),
-    m_active_macro(),
-    m_ioportList(),
-    m_active_inputs(),
-    m_whitelist(),
-    m_kof_p1death(-1),
-    m_p1_role(-1),
-    m_count_frame(0)
+    : m_machine(machine),
+      m_refreshrole_callback(callback),
+      m_inputmacro(std::make_unique<inputmacro>()),
+      m_active_macro(),
+      m_ioportList(),
+      m_active_inputs(),
+      m_whitelist(),
+      m_kof_p1death(-1),
+      m_p1_role(-1),
+      m_count_frame(0)
 
 {
 
@@ -40,20 +38,20 @@ inputmacro_manager::inputmacro_manager(running_machine &machine, refreshRole_cal
 //============================================================
 inputmacro_manager::~inputmacro_manager()
 {
-    //释放不需要的参数
+    // 释放不需要的参数
 }
 
 //============================================================
 //  执行一键宏
 //============================================================
-void inputmacro_manager::execute(int player, const char *key, bool* release, execute_callback callback)
+void inputmacro_manager::execute(int player, const char *key, bool *release, execute_callback callback)
 {
     // 判断方向
     bool result = left_direction(player);
     bool isExist = false;
-    for (auto& role : m_inputmacro->rolelist) 
+    for (auto &role : m_inputmacro->rolelist)
     {
-        for (auto & skill : role.skilllist) 
+        for (auto &skill : role.skilllist)
         {
             if (skill.key == key)
             {
@@ -67,14 +65,14 @@ void inputmacro_manager::execute(int player, const char *key, bool* release, exe
                     inputmacro_skill newskill;
                     newskill.key = skill.key;
                     newskill.frame = skill.frame;
-                    newskill.loop = skill.loop;
+                    newskill.type = skill.type;
                     newskill.step = skill.step;
-                    for (auto& step : skill.steps)
+                    for (auto &step : skill.steps)
                     {
                         inputmacro_step newstep;
                         newstep.delay = step.delay;
                         newstep.duration = step.duration;
-                        for (auto& input : step.inputs)
+                        for (auto &input : step.inputs)
                         {
                             if (input.mask == 53)
                             {
@@ -129,8 +127,16 @@ void inputmacro_manager::process_frame()
     // 循环遍历当前待处理的输入
     for (auto macro = m_active_macro.begin(); macro != m_active_macro.end(); ++macro)
     {
+        // 如果当前宏指令为自动连发的功能
+        if (macro->value.step == -1)
+        {
+            // 将当前宏指令的步骤设置为0
+			macro->value.step = 0;
+            // 将当前宏指令的计时器重置为0
+			macro->value.frame = 0;
+        }
         // 如果当前宏指令还没有开始
-        if (macro->value.step == 0)
+        else if (macro->value.step == 0)
         {
             // 将当前宏指令的步骤设置为1
             macro->value.step = 1;
@@ -166,16 +172,25 @@ void inputmacro_manager::process_frame()
                     // 获取下一步的信息
                     step = macro->value.steps[macro->value.step - 1];
                 }
-                // 当前宏指令已经执行完毕并且绑定的按键已经被释放，则结束该宏指令(只有配置loop为0的时候才有其到效果)
-                else if (!(*macro->release) && macro->value.loop == 0)
+                // 当前宏指令已经执行完毕并且绑定的按键已经被释放
+                // 并且宏类型为2或者3或者4,则结束该宏指令
+                else if (!(*macro->release) && (macro->value.type == 2 || macro->value.type == 3 || macro->value.type == 4))
                 {
                     step.inputs = std::vector<inputmacro_mask>();
                     macro->value.step = 0;
                     macro->value.frame = 0;
                     to_remove.push_back(macro);
                 }
-                // 如果宏指令需要一直执行直到按键释放，则在绑定的按键已经释放时结束该宏指令
-                else if (macro->value.loop < 0)
+                // 如果宏指令类型为3则为半自动连发功能,或者类型为4全自动连发功能
+                else if (macro->value.type == 3 || macro->value.type == 4)
+                {
+                    // 将宏指令的步骤设置为-1,作用是充当一帧的弹起
+					macro->value.step = -1;
+                    // 将当前宏指令的计时器重置为-1
+					macro->value.frame = -1;
+                }
+                // 如果宏指令类型为1则为马上释放
+                else if (macro->value.type == 1)
                 {
                     // 将下一步的信息设置为0
                     step.inputs = std::vector<inputmacro_mask>();
@@ -230,7 +245,7 @@ void inputmacro_manager::active_field(int player, inputmacro_step step)
     {
         if (field->name().find(playerName) != std::string::npos)
         {
-            for (auto & input : step.inputs)
+            for (auto &input : step.inputs)
             {
                 if (field->type() == input.mask)
                 {
@@ -241,17 +256,15 @@ void inputmacro_manager::active_field(int player, inputmacro_step step)
     }
 }
 
-
 //============================================================
 //  判断人物是否是在左边
 //============================================================
 bool inputmacro_manager::left_direction(int player)
 {
-   cpu_device *main_cpu = downcast<cpu_device*>(m_machine.root_device().subdevice("maincpu"));
-   if (main_cpu != nullptr)
-   {
+    cpu_device *main_cpu = downcast<cpu_device *>(m_machine.root_device().subdevice("maincpu"));
+    if (main_cpu != nullptr)
+    {
         inputmacro_direction_address address;
-        // 是否取反(有些游戏可能只要找一个方向就够了。比如kof 系列，比如P1 在左边，那P2肯定就在右边)
         bool is_invert = false;
         if (m_inputmacro->direction_address.size() == 1 && player == 2)
         {
@@ -260,7 +273,7 @@ bool inputmacro_manager::left_direction(int player)
         }
         else
         {
-            address = m_inputmacro->direction_address[player-1];
+            address = m_inputmacro->direction_address[player - 1];
             is_invert = false;
         }
 
@@ -275,13 +288,13 @@ bool inputmacro_manager::left_direction(int player)
         {
             return is_invert ? true : false;
         }
-   }
-   else 
-   {
-      osd_printf_verbose("没有匹配到cpu_device\n");
-      return false;
-   }
-   return false;
+    }
+    else
+    {
+        osd_printf_verbose("没有匹配到cpu_device\n");
+        return false;
+    }
+    return false;
 }
 
 //============================================================
@@ -289,35 +302,53 @@ bool inputmacro_manager::left_direction(int player)
 //============================================================
 void inputmacro_manager::refresh_role()
 {
-   // 判断是否存在在白名单之内
-   std::string game_name = m_machine.basename();
-   bool ip_exist_in_whitelist = std::find(m_whitelist.begin(), m_whitelist.end(), game_name) != m_whitelist.end();
-   if (ip_exist_in_whitelist)
-   {
-      // 判断名称是否有kof开始，有的话，进入kof系列判断
-      if (game_name.find("kof") != std::string::npos) 
-      {
-        kof_role_update(game_name);
-      }
-      else if (game_name == "sf2" || game_name == "sf2ce")
-      {
-        sf_role_update(game_name);
-      }
-   }
+    // 判断是否存在在白名单之内
+    std::string game_name = m_machine.basename();
+    bool ip_exist_in_whitelist = std::find(m_whitelist.begin(), m_whitelist.end(), game_name) != m_whitelist.end();
+    if (ip_exist_in_whitelist)
+    {
+        // 判断名称是否有kof开始，有的话，进入kof系列判断
+        if (game_name.find("kof") != std::string::npos)
+        {
+            kof_role_update(game_name);
+        }
+        else if (game_name == "sf2" || game_name == "sf2ce")
+        {
+            sf_role_update(game_name);
+        }
+    }
 }
-
 
 //============================================================
 //  加载所有的输入端口
 //============================================================
 void inputmacro_manager::load_ioportField()
 {
+    std::unordered_set<ioport_type> typeSet = {IPT_JOYSTICK_UP,
+                                               IPT_JOYSTICK_DOWN,
+                                               IPT_JOYSTICK_LEFT,
+                                               IPT_JOYSTICK_RIGHT,
+                                               IPT_BUTTON1,
+                                               IPT_BUTTON2,
+                                               IPT_BUTTON3,
+                                               IPT_BUTTON4,
+                                               IPT_BUTTON5,
+                                               IPT_BUTTON6,
+                                               IPT_BUTTON7,
+                                               IPT_BUTTON8,
+                                               IPT_BUTTON9,
+                                               IPT_BUTTON10,
+                                               IPT_BUTTON11,
+                                               IPT_BUTTON12,
+                                               IPT_BUTTON13,
+                                               IPT_BUTTON14,
+                                               IPT_BUTTON15,
+                                               IPT_BUTTON16};
     for (auto &port : m_machine.ioport().ports())
     {
-        auto it = std::find(m_inputmacro->portKeylist.begin(), m_inputmacro->portKeylist.end(), port.first);
-        if (it != m_inputmacro->portKeylist.end())
+        for (ioport_field &field : port.second->fields())
         {
-            for (ioport_field &field : port.second->fields())
+            if (typeSet.find(field.type()) != typeSet.end())
             {
                 m_ioportList.push_back(&field);
             }
@@ -340,7 +371,6 @@ void inputmacro_manager::reload()
     load_macro();
 }
 
-
 //============================================================
 //  加载输入宏数据
 //============================================================
@@ -348,12 +378,12 @@ void inputmacro_manager::load_macro()
 {
     std::string name = m_machine.basename();
     std::string path = string_format("%s%s%s.cfg", "macro", PATH_SEPARATOR, name);
-	std::ifstream ifs(path);
+    std::ifstream ifs(path);
     if (ifs.good())
     {
         rapidjson::IStreamWrapper isw(ifs);
-	    rapidjson::Document document;
-	    document.ParseStream<0>(isw);
+        rapidjson::Document document;
+        document.ParseStream<0>(isw);
         if (document.HasParseError())
         {
             osd_printf_verbose("解析%s输入宏JSON文件失败\n", name);
@@ -362,8 +392,8 @@ void inputmacro_manager::load_macro()
         {
             if (document.HasMember("direction") && document["direction"].IsArray())
             {
-                const auto& directions = document["direction"].GetArray();
-                for(auto &direction : directions)
+                const auto &directions = document["direction"].GetArray();
+                for (auto &direction : directions)
                 {
                     inputmacro_direction_address m_direction_address;
                     m_direction_address.address = direction["address"].GetUint();
@@ -372,45 +402,36 @@ void inputmacro_manager::load_macro()
                 }
             }
 
-            if (document.HasMember("portList") && document["portList"].IsArray())
-            {
-                const auto& ports = document["portList"].GetArray();
-                for (auto& port : ports)
-                {
-                    m_inputmacro->portKeylist.push_back(port.GetString());
-                }
-            }
-
             if (document.HasMember("roles") && document["roles"].IsArray())
             {
-                const auto& roles = document["roles"].GetArray();
-                for (auto& role : roles)
+                const auto &roles = document["roles"].GetArray();
+                for (auto &role : roles)
                 {
                     inputmacro_role m_role;
                     m_role.id = role["id"].GetString();
                     m_role.address = role["address"].GetString();
                     if (role.HasMember("skills") && role["skills"].IsArray())
                     {
-                        const auto& skills = role["skills"].GetArray();
-                        for (auto& skill : skills)
+                        const auto &skills = role["skills"].GetArray();
+                        for (auto &skill : skills)
                         {
                             inputmacro_skill m_skill;
                             m_skill.key = skill["key"].GetString();
-                            m_skill.loop = skill["loop"].GetInt();
+                            m_skill.type = skill["type"].GetInt();
                             m_skill.step = 0;
                             m_skill.frame = 0;
                             if (skill.HasMember("steps") && skill["steps"].IsArray())
                             {
-                                const auto& steps = skill["steps"].GetArray();
-                                for (auto& step: steps)
+                                const auto &steps = skill["steps"].GetArray();
+                                for (auto &step : steps)
                                 {
                                     inputmacro_step m_step;
                                     m_step.delay = step["delay"].GetInt();
                                     m_step.duration = step["duration"].GetInt();
                                     if (step.HasMember("inputs") && step["inputs"].IsArray())
                                     {
-                                        const auto& inputs = step["inputs"].GetArray();
-                                        for (auto& input: inputs)
+                                        const auto &inputs = step["inputs"].GetArray();
+                                        for (auto &input : inputs)
                                         {
                                             m_step.inputs.push_back(inputmacro_mask(input["mask"].GetInt()));
                                         }
@@ -432,4 +453,3 @@ void inputmacro_manager::load_macro()
         osd_printf_verbose("不存在%s游戏的输入宏\n", name);
     }
 }
-
