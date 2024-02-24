@@ -435,7 +435,7 @@ extern const char * myosd_cheat();
 extern bool myosd_cheatSwitchScript(int index, bool isOpen);
 
 /// @brief 显示或者关闭菜单栏
-extern void myosd_ShowMenu();
+extern void myosd_showMenu();
 
 /// @brief 刷新宏
 extern void myosd_macro_reload();

@@ -199,7 +199,7 @@ extern "C" bool myosd_cheatSwitchScript(int index, bool isOpen)
 //============================================================
 //  显示或者关闭菜单栏
 //============================================================
-extern "C" void myosd_ShowMenu() {
+extern "C" void myosd_showMenu() {
 
     OSD_MANAGER->ui().show_menu();
 }
